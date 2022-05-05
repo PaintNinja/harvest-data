@@ -55,8 +55,30 @@ while (!feof($file)) {
     $line = fgets($file);
     $splitLine = explode(", ", $line);
 
-    // first entry is always the county
-    $county = $splitLine[0];
+    // first entry should always be the county
+    $county = ucfirst($splitLine[0]);
+    if (strlen($county) < 4) {
+        ?>
+        <details>
+            <summary>County name too short or missing: <code>"<?php echo $county ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Check that there is a county name at the start of the line. If not, add one</li>
+                <li>Make sure the entered county name is the full name of the county, not a postcode</li>
+            </ul>
+        </details>
+        <?php
+    } else if (is_numeric($county[0])) {
+        ?>
+        <details>
+            <summary>County name should not start with a number: <code>"<?php echo $county ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Check that there is a county name at the start of the line. If not, add one</li>
+            </ul>
+        </details>
+        <?php
+    }
     $data->put($county, new Map());
     array_shift($splitLine);
 
@@ -69,9 +91,33 @@ while (!feof($file)) {
             $cropName = $cropCode;
             if (array_key_exists($cropCode, $cropCodes)) {
                 $cropName = $cropCodes[$cropCode];
+            } else if ($cropCode === "") {
+                $cropName = "Unknown";
             } else {
                 // log the unknown crop code
-                echo "Unknown crop code: \"$cropCode\"<br>";
+                ?>
+                <details>
+                    <summary>Unknown crop code: <code>"<?php echo $cropCode ?>"</code></summary>
+                    <p>Tips:</p>
+                    <ul>
+                        <li>Make sure the entered crop code is a recognised crop code:</li>
+                        <ul>
+                            <li>W for wheat</li>
+                            <li>B for barley</li>
+                            <li>M for maize</li>
+                            <li>BE for beetroot</li>
+                            <li>C for carrot</li>
+                            <li>PO for potatoes</li>
+                            <li>PA for parsnips</li>
+                            <li>O for oats</li>
+                        </ul>
+                        <li>Check for any typos in your crop code:</li>
+                        <ul>
+                            <li>For example, you may have accidentally wrote "BD" instead of "BE"</li>
+                        </ul>
+                    </ul>
+                </details>
+                <?php
             }
             $data->get($county)->put($cropName, $value);
         } else { // the value is the crop code for the next value's harvest amount

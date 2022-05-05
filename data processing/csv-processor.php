@@ -28,7 +28,11 @@ use Ds\Map;
 
 ini_set('display_errors', 1);
 
-$file = fopen("../csv files/harvest data - clean.csv", "r");
+function isLowercase($string): bool {
+    return ($string === strtolower($string));
+}
+
+$file = fopen("../csv files/harvest data - validation needed.csv", "r");
 
 $cropCodes = [
     "W" => "Wheat",
@@ -59,12 +63,19 @@ while (!feof($file)) {
     // loop through the rest of the entries
     $cropCode = "";
     foreach ($splitLine as $index => $value) {
-        if (is_numeric($value)) {
-            // lookup the crop name from the code
-            $cropName = $cropCodes[$cropCode];
+        // crops are stored as value pairs, first is the crop code, second is the harvest amount
+        if (is_numeric($value)) { // the value is the harvest amount associated to the previous value's crop code
+            // lookup the crop name from the code, falling back to the crop code if unknown
+            $cropName = $cropCode;
+            if (array_key_exists($cropCode, $cropCodes)) {
+                $cropName = $cropCodes[$cropCode];
+            } else {
+                // log the unknown crop code
+                echo "Unknown crop code: \"$cropCode\"<br>";
+            }
             $data->get($county)->put($cropName, $value);
-        } else {
-            $cropCode = $value;
+        } else { // the value is the crop code for the next value's harvest amount
+            $cropCode = strtoupper($value);
         }
     }
 }

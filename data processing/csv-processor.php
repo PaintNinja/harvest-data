@@ -69,6 +69,34 @@ while (!feof($file)) {
     }
 }
 
+// apply the override if it exists
+if (file_exists("../csv files/override.csv")) {
+    $overrideFile = fopen("../csv files/override.csv", "r");
+
+    while (!feof($overrideFile)) {
+        $line = fgets($overrideFile);
+        $splitLine = explode(", ", $line);
+
+        $county = $splitLine[0];
+        try {
+            $countyData = $data->get($county);
+        } catch (Exception $e) {
+            $countyData = new Map();
+        }
+
+        $cropCode = "";
+        foreach ($splitLine as $index => $value) {
+            if (is_numeric($value)) {
+                $cropName = $cropCodes[$cropCode];
+                $countyData->put($cropName, $value);
+            } else {
+                $cropCode = $value;
+            }
+        }
+        $data->put($county, $countyData);
+    }
+}
+
 // make the tables
 foreach ($data as $county => $countyData) {
 //    print_r($county);

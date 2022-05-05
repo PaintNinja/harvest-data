@@ -17,6 +17,17 @@
         code, pre {
             font-family: ui-monospace, monospace;
         }
+        main {
+            width: min(750px, 100%);
+            margin-inline: 1rem;
+            display: grid;
+            grid-template-columns: auto auto;
+            gap: 1rem;
+            justify-content: stretch;
+        }
+        article {
+            margin-top: 3rem;
+        }
     </style>
 </head>
 <body>
@@ -186,12 +197,15 @@ if (file_exists("../csv files/override.csv")) {
     }
 }
 
+echo "<main>";
+
 // make the tables
 foreach ($data as $county => $countyData) {
 //    print_r($county);
 //    echo "<pre>";
 //    print_r($countyData);
 //    echo "</pre>";
+    echo "<article>";
     echo "<h2>$county</h2>";
     ?>
     <table border="1">
@@ -224,7 +238,9 @@ foreach ($data as $county => $countyData) {
             <td>100%</td>
         </tr>
     </table>
+    </article>
     <?php
 }
 ?>
+</main>
 </body>

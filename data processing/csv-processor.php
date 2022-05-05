@@ -23,38 +23,53 @@
 <h1>Formatted harvest data</h1>
 <hr>
 <?php
-require '../vendor/autoload.php'; // import libs from Composer
-use Ds\Map;
+//require '../vendor/autoload.php'; // import libs from Composer
+//use Ds\Map;
 
 ini_set('display_errors', 1);
 
 $file = fopen("../csv files/harvest data - clean.csv", "r");
 
 // create a Map of the data
-$map = new Map();
+//$map = new Map();
+
+$cropCodes = [
+    "W" => "Wheat",
+    "B" => "Barley",
+    "M" => "Maize",
+    "BE" => "Beetroot",
+    "C" => "Carrot",
+    "PO" => "Potatoes",
+    "PA" => "Parsnips",
+    "O" => "Oats"
+];
+echo "<pre>";
+print_r($cropCodes);
+echo "</pre>";
+
+$data = [];
 
 while (!feof($file)) {
     $line = fgets($file);
-    $splitLine = explode(",", $line);
+    $splitLine = explode(", ", $line);
 
-    // first entry is always County
+    // first entry is always the county
     $county = $splitLine[0];
-    $map->put($county, new Map());
+    //$map->put($county, new Map());
     array_shift($splitLine);
 
     // loop through the rest of the entries
     $cropCode = "";
     foreach ($splitLine as $index => $value) {
         if (is_numeric($value)) {
-            $map->get($county)->put($cropCode, $value);
+            $data[$county][$cropCode] = $value;
+            //$map->get($county)->put($cropCode, $value);
         } else {
             $cropCode = $value;
         }
-        echo "<code>index " . $index . ": " . $value . "</code><br>";
         //$map->get($splitLine[0])->put($key, $value);
     }
-    echo "<br>";
 }
 ?>
-<pre><?php print_r($map); ?></pre>
+<pre><?php print_r($data); ?></pre>
 </body>

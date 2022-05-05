@@ -68,6 +68,46 @@ while (!feof($file)) {
         }
     }
 }
+
+// make the tables
+foreach ($data as $county => $countyData) {
+//    print_r($county);
+//    echo "<pre>";
+//    print_r($countyData);
+//    echo "</pre>";
+    echo "<h2>$county</h2>";
+    ?>
+    <table border="1">
+        <tr>
+            <th>Crop</th>
+            <th>Harvest (tonnes)</th>
+            <th>Percentage</th>
+        </tr>
+        <?php
+        foreach ($countyData as $crop => $harvest) {
+//        print_r($crop);
+//        print_r($harvest);
+            ?>
+            <tr>
+                <td><?php echo $crop; ?></td>
+                <td><?php echo $harvest; ?></td>
+                <?php
+                // calculate the percentage
+                $harvestTotal = $data->get($county)->sum();
+                $percentage = ($harvest / $harvestTotal) * 100;
+                ?>
+                <td><?php echo round($percentage, 2); ?>%</td>
+            </tr>
+            <?php
+        }
+        ?>
+        <tr>
+            <td>Total</td>
+            <td><?php echo $data->get($county)->sum(); ?></td>
+            <td>100%</td>
+        </tr>
+    </table>
+    <?php
+}
 ?>
-<pre><?php print_r($data); ?></pre>
 </body>

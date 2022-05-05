@@ -7,14 +7,14 @@
         body {
             font-family: system-ui;
         }
-        h1 {
+        h1, h2 {
             margin-top: 3rem;
-            margin-bottom: 0.125rem;
+            margin-bottom: 0.25rem;
         }
-        h1:first-of-type {
+        h1:first-of-type, h2:first-of-type {
             margin-top: 0;
         }
-        code {
+        code, pre {
             font-family: ui-monospace, monospace;
         }
     </style>
@@ -23,15 +23,12 @@
 <h1>Formatted harvest data</h1>
 <hr>
 <?php
-//require '../vendor/autoload.php'; // import libs from Composer
-//use Ds\Map;
+require '../vendor/autoload.php'; // import libs from Composer
+use Ds\Map;
 
 ini_set('display_errors', 1);
 
 $file = fopen("../csv files/harvest data - clean.csv", "r");
-
-// create a Map of the data
-//$map = new Map();
 
 $cropCodes = [
     "W" => "Wheat",
@@ -43,11 +40,12 @@ $cropCodes = [
     "PA" => "Parsnips",
     "O" => "Oats"
 ];
-echo "<pre>";
-print_r($cropCodes);
-echo "</pre>";
+//echo "<pre>";
+//print_r($cropCodes);
+//echo "</pre>";
 
-$data = [];
+// create a Map of the data
+$data = new Map();
 
 while (!feof($file)) {
     $line = fgets($file);
@@ -55,19 +53,19 @@ while (!feof($file)) {
 
     // first entry is always the county
     $county = $splitLine[0];
-    //$map->put($county, new Map());
+    $data->put($county, new Map());
     array_shift($splitLine);
 
     // loop through the rest of the entries
     $cropCode = "";
     foreach ($splitLine as $index => $value) {
         if (is_numeric($value)) {
-            $data[$county][$cropCode] = $value;
-            //$map->get($county)->put($cropCode, $value);
+            // lookup the crop name from the code
+            $cropName = $cropCodes[$cropCode];
+            $data->get($county)->put($cropName, $value);
         } else {
             $cropCode = $value;
         }
-        //$map->get($splitLine[0])->put($key, $value);
     }
 }
 ?>

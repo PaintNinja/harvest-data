@@ -28,8 +28,78 @@ use Ds\Map;
 
 ini_set('display_errors', 1);
 
-function isLowercase($string): bool {
-    return ($string === strtolower($string));
+// make an enum of error types
+enum ErrorType {
+    case ShortOrMissingCountyName;
+    case CountyNameStartsWithNumber;
+    case UnknownCropCode;
+    case MissingCropCode;
+}
+
+function showError(ErrorType $errorType, string $problematicText, string $county): void {
+    ?>
+    <details>
+    <?php
+    switch ($errorType) {
+        case ErrorType::ShortOrMissingCountyName:
+            ?>
+            <summary>County name too short or missing: <code>"<?php echo $problematicText; ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Check that there is a county name at the start of the line. If not, add one</li>
+                <li>Make sure the entered county name is the full name of the county, not a postcode</li>
+            </ul>
+            <?php
+            break;
+        case ErrorType::CountyNameStartsWithNumber:
+            ?>
+            <summary>County name should not start with a number: <code>"<?php echo $problematicText; ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Check that there is a county name at the start of the line. If not, add one</li>
+            </ul>
+            <?php
+            break;
+        case ErrorType::UnknownCropCode:
+            ?>
+            <summary>Unknown crop code: <code>"<?php echo $problematicText; ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Make sure the entered crop code is a recognised crop code:</li>
+                <ul>
+                    <li>W for wheat</li>
+                    <li>B for barley</li>
+                    <li>M for maize</li>
+                    <li>BE for beetroot</li>
+                    <li>C for carrot</li>
+                    <li>PO for potatoes</li>
+                    <li>PA for parsnips</li>
+                    <li>O for oats</li>
+                </ul>
+                <li>Check for any typos in your crop code:</li>
+                <ul>
+                    <li>For example, you may have accidentally wrote "BD" instead of "BE"</li>
+                </ul>
+            </ul>
+            <?php
+            break;
+        case ErrorType::MissingCropCode:
+            ?>
+            <summary>Missing crop code in county "<code><?php echo $county; ?>"</code></summary>
+            <p>Tips:</p>
+            <ul>
+                <li>Check that all your numbers have a crop code before them. For example:</li>
+                <ul>
+                    <li>Good: <code>Cambridgeshire, W, 21, C, 782</code></li>
+                    <li>Bad:  <code>Cambridgeshire, W, 21, 782</code> (missing C before 782)</li></li>
+                </ul>
+            </ul>
+            <?php
+            break;
+    }
+    ?>
+    </details>
+    <?php
 }
 
 $file = fopen("../csv files/harvest data - validation needed.csv", "r");
@@ -58,26 +128,9 @@ while (!feof($file)) {
     // first entry should always be the county
     $county = ucfirst($splitLine[0]);
     if (strlen($county) < 4) {
-        ?>
-        <details>
-            <summary>County name too short or missing: <code>"<?php echo $county ?>"</code></summary>
-            <p>Tips:</p>
-            <ul>
-                <li>Check that there is a county name at the start of the line. If not, add one</li>
-                <li>Make sure the entered county name is the full name of the county, not a postcode</li>
-            </ul>
-        </details>
-        <?php
+        showError(ErrorType::ShortOrMissingCountyName, $county, $county);
     } else if (is_numeric($county[0])) {
-        ?>
-        <details>
-            <summary>County name should not start with a number: <code>"<?php echo $county ?>"</code></summary>
-            <p>Tips:</p>
-            <ul>
-                <li>Check that there is a county name at the start of the line. If not, add one</li>
-            </ul>
-        </details>
-        <?php
+        showError(ErrorType::CountyNameStartsWithNumber, $county, $county);
     }
     $data->put($county, new Map());
     array_shift($splitLine);
@@ -93,31 +146,10 @@ while (!feof($file)) {
                 $cropName = $cropCodes[$cropCode];
             } else if ($cropCode === "") {
                 $cropName = "Unknown";
+                showError(ErrorType::MissingCropCode, $cropCode, $county);
             } else {
                 // log the unknown crop code
-                ?>
-                <details>
-                    <summary>Unknown crop code: <code>"<?php echo $cropCode ?>"</code></summary>
-                    <p>Tips:</p>
-                    <ul>
-                        <li>Make sure the entered crop code is a recognised crop code:</li>
-                        <ul>
-                            <li>W for wheat</li>
-                            <li>B for barley</li>
-                            <li>M for maize</li>
-                            <li>BE for beetroot</li>
-                            <li>C for carrot</li>
-                            <li>PO for potatoes</li>
-                            <li>PA for parsnips</li>
-                            <li>O for oats</li>
-                        </ul>
-                        <li>Check for any typos in your crop code:</li>
-                        <ul>
-                            <li>For example, you may have accidentally wrote "BD" instead of "BE"</li>
-                        </ul>
-                    </ul>
-                </details>
-                <?php
+                showError(ErrorType::UnknownCropCode, $cropCode, $county);
             }
             $data->get($county)->put($cropName, $value);
         } else { // the value is the crop code for the next value's harvest amount
